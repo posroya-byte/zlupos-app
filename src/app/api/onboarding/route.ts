@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     }
 
     const now = new Date();
-    const trialEndsAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const trialEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
     const slug = `${salonName
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
         logo_url: logoUrl,
         primary_color: primaryColor,
         owner_id: userId,
-        status: "trialing",
+        status: "trialling",
         trial_ends_at: trialEndsAt,
       })
       .select("id")
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
       .insert({
         tenant_id: tenantId,
         plan,
-        status: "trialing",
+        status: "trialling",
         starts_at: now.toISOString(),
         trial_ends_at: trialEndsAt,
       })
