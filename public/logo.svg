@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" role="img" aria-labelledby="title">
+  <title id="title">ZLUPOS</title>
+  <defs>
+    <linearGradient id="cloud" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0877f9"/>
+      <stop offset=".58" stop-color="#05d9ce"/>
+      <stop offset="1" stop-color="#0877f9"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22f4da"/>
+      <stop offset="1" stop-color="#00bce9"/>
+    </linearGradient>
+    <linearGradient id="word" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#6d00e9"/>
+      <stop offset=".43" stop-color="#0756e8"/>
+      <stop offset="1" stop-color="#02d9cd"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(4 5)">
+    <path d="M17 65h10V43c0-8 6-14 14-14h5C50 14 64 5 80 5c19 0 34 15 35 34 13-1 24 9 24 22 0 14-11 24-25 24H36C23 85 14 76 14 65c0-5 1-9 3-12Z" fill="url(#cloud)" stroke="#0aaee9" stroke-width="3"/>
+    <path d="M38 38h67v25H38z" fill="#063aa8" opacity=".9"/>
+    <path d="M34 34h69v24H34z" fill="#0782f4" stroke="#1af0db" stroke-width="2"/>
+    <path d="M34 34h69l-7 7H27z" fill="#20ead4"/>
+    <path d="M44 42h17v9H44zm0 10h17v6H44z" fill="#d9f5ff"/>
+    <path d="M78 43c5 4 5 11 0 15m6-19c8 7 8 16 0 23" fill="none" stroke="#70f8e8" stroke-linecap="round" stroke-width="3"/>
+    <path d="m17 70 17-15 20 1-37 29z" fill="#0c55d1" stroke="#18f0db" stroke-width="2"/>
+    <path d="m54 56 44-1 18 11-48 5z" fill="#061e58"/>
+    <path d="m75 64 41 1-12 24-48-2z" fill="#063c9f" stroke="#11d8e3" stroke-width="2"/>
+    <path d="m80 68 23 1-5 8H75z" fill="url(#screen)"/>
+    <g fill="#c9f6ff" stroke="#1688db" stroke-width="1">
+      <path d="m71 80 7 0-3 4h-8zm11 1h7l-3 4h-8zm11 0h7l-3 4h-8z"/>
+      <path d="m69 86 7 0-3 4h-8zm12 1h7l-3 4h-8zm11 0h7l-3 4h-8z"/>
+    </g>
+  </g>
+  <text x="150" y="69" textLength="205" lengthAdjust="spacingAndGlyphs" fill="url(#word)" stroke="#063a9e" stroke-linejoin="round" stroke-width="2" paint-order="stroke" font-family="Arial, sans-serif" font-size="53" font-weight="900" letter-spacing="1">ZLUPOS</text>
+</svg>

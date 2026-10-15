@@ -2,9 +2,11 @@
 
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ImagePlus, LoaderCircle, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent } from "react";
+import Image from "next/image";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import type { SubscriptionPlan } from "@/types/database";
+import { countries, detectCountryCode, type CountryCode } from "./countries";
 
 const steps = ["بياناتك", "الصالون", "الهوية", "الباقة"];
 const plans: { id: SubscriptionPlan; name: string; price: string; note: string; features: string[] }[] = [
@@ -19,6 +21,7 @@ const initialForm: FormValues = { fullName: "", email: "", password: "", phone: 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [countryCode, setCountryCode] = useState<CountryCode>("EG");
   const [form, setForm] = useState(initialForm);
   const [primaryColor, setPrimaryColor] = useState("#1d6c52");
   const [plan, setPlan] = useState<SubscriptionPlan>("growth");
@@ -26,6 +29,15 @@ export default function OnboardingPage() {
   const [logoName, setLogoName] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const country = countries[countryCode];
+
+  useEffect(() => {
+    setCountryCode(detectCountryCode(Intl.DateTimeFormat().resolvedOptions().timeZone));
+    const requestedPlan = new URLSearchParams(window.location.search).get("plan");
+    if (requestedPlan && plans.some((item) => item.id === requestedPlan)) {
+      setPlan(requestedPlan as SubscriptionPlan);
+    }
+  }, []);
 
   function updateForm(field: keyof FormValues, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -57,7 +69,17 @@ export default function OnboardingPage() {
       const response = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, primaryColor, plan, logoDataUrl: logoDataUrl || null }),
+        body: JSON.stringify({
+          ...form,
+          phone: `${country.dialCode} ${form.phone.trim()}`,
+          salonPhone: `${country.dialCode} ${form.salonPhone.trim()}`,
+          country: countryCode,
+          currency: country.currencyCode,
+          timezone: country.timezone,
+          primaryColor,
+          plan,
+          logoDataUrl: logoDataUrl || null,
+        }),
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "تعذر إنشاء الحساب.");
@@ -77,19 +99,19 @@ export default function OnboardingPage() {
     <main className="onboarding-shell" dir="rtl">
       <aside className="onboarding-rail">
         <a className="brand-lockup" href="/onboarding" aria-label="ZLUPOS Production">
-          <span className="brand-mark">Z</span><span><strong>ZLUPOS</strong><small>PRODUCTION</small></span>
+          <Image src="/logo.svg" alt="ZLUPOS" width={142} height={39} style={{ width: 142, height: 39, objectFit: "contain" }} />
         </a>
         <div className="rail-copy">
           <span className="eyebrow">كل تفاصيل صالونك، في مكان واحد</span>
           <h1>بداية مرتبة<br />ليوم أجمل.</h1>
           <p>نظام بسيط لإدارة المواعيد والمبيعات والفريق، حتى تركزي على تجربة عميلاتك.</p>
         </div>
-        <div className="trial-stamp"><Sparkles size={17} aria-hidden="true" /><span><strong>١٤ يوماً</strong> تجربة كاملة، بلا رسوم</span></div>
+          <div className="trial-stamp"><Sparkles size={17} aria-hidden="true" /><span><strong>٣٠ يوماً</strong> تجربة كاملة، بلا رسوم</span></div>
         <div className="rail-footer"><span>مصمم لأصحاب الصالونات</span><span className="rail-dots" aria-hidden="true"><i /><i /><i /></span></div>
       </aside>
 
       <section className="onboarding-main">
-        <header className="onboarding-topbar"><span>إنشاء مساحة عمل جديدة</span><span className="secure-note"><CheckCircle2 size={15} /> بياناتك محمية</span></header>
+        <header className="onboarding-topbar"><a href="/" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={112} height={31} style={{ width: 112, height: 31, objectFit: "contain" }} /></a><span>إنشاء مساحة عمل جديدة</span><span className="secure-note"><CheckCircle2 size={15} /> بياناتك محمية</span></header>
         <div className="wizard-wrap">
           <div className="wizard-heading">
             <div>
@@ -99,7 +121,7 @@ export default function OnboardingPage() {
                 "نحتاج بعض التفاصيل لتجهيز حسابك.",
                 "هذه المعلومات تظهر في إيصالاتك وإعدادات الفروع.",
                 "أضيفي الشعار واللون الذي يعبّر عن علامتك.",
-                "كل الباقات تبدأ بفترة تجربة مجانية لمدة ١٤ يوماً.",
+                "كل الباقات تبدأ بفترة تجربة مجانية لمدة ٣٠ يوماً.",
               ][step]}</p>
             </div>
             <span className="step-counter">{step + 1}<span> / 4</span></span>
@@ -110,16 +132,19 @@ export default function OnboardingPage() {
 
           <div className="wizard-panel">
             {step === 0 && <div className="field-grid">
+              <label className="field full-field"><span>الدولة</span><select value={countryCode} onChange={(event) => setCountryCode(event.target.value as CountryCode)}>
+                {(Object.entries(countries) as [CountryCode, (typeof countries)[CountryCode]][]).map(([code, item]) => <option key={code} value={code}>{item.name}</option>)}
+              </select><small className="field-hint">العملة: {country.currencyCode} ({country.currencySymbol}) · المنطقة الزمنية: {country.timezone}</small></label>
               <label className="field full-field"><span>الاسم الكامل</span><input autoComplete="name" value={form.fullName} onChange={(event) => updateForm("fullName", event.target.value)} placeholder="مثال: سارة محمود" /></label>
               <label className="field full-field"><span>البريد الإلكتروني</span><input type="email" autoComplete="email" dir="ltr" value={form.email} onChange={(event) => updateForm("email", event.target.value)} placeholder="name@example.com" /></label>
-              <label className="field"><span>رقم الهاتف</span><input type="tel" autoComplete="tel" dir="ltr" value={form.phone} onChange={(event) => updateForm("phone", event.target.value)} placeholder="01xxxxxxxxx" /></label>
+              <label className="field"><span>رقم الهاتف</span><span dir="ltr" style={{ display: "flex", gap: 8 }}><input aria-label="مفتاح الدولة" value={country.dialCode} readOnly tabIndex={-1} style={{ width: 58, flex: "none", textAlign: "center" }} /><input type="tel" autoComplete="tel-national" dir="ltr" value={form.phone} onChange={(event) => updateForm("phone", event.target.value)} placeholder="رقم الهاتف" /></span></label>
               <label className="field"><span>كلمة المرور</span><input type="password" autoComplete="new-password" dir="ltr" value={form.password} onChange={(event) => updateForm("password", event.target.value)} placeholder="٨ أحرف على الأقل" /></label>
               <p className="field-hint full-field">استخدمي كلمة مرور قوية تحتوي على ٨ أحرف أو أكثر.</p>
             </div>}
 
             {step === 1 && <div className="field-grid">
               <label className="field full-field"><span>اسم الصالون</span><input value={form.salonName} onChange={(event) => updateForm("salonName", event.target.value)} placeholder="مثال: لافندر بيوتي" /></label>
-              <label className="field"><span>هاتف الصالون</span><input type="tel" dir="ltr" value={form.salonPhone} onChange={(event) => updateForm("salonPhone", event.target.value)} placeholder="02xxxxxxxx" /></label>
+              <label className="field"><span>هاتف الصالون</span><span dir="ltr" style={{ display: "flex", gap: 8 }}><input aria-label="مفتاح الدولة" value={country.dialCode} readOnly tabIndex={-1} style={{ width: 58, flex: "none", textAlign: "center" }} /><input type="tel" dir="ltr" value={form.salonPhone} onChange={(event) => updateForm("salonPhone", event.target.value)} placeholder="رقم الهاتف" /></span></label>
               <label className="field"><span>عنوان الفرع الرئيسي</span><input value={form.address} onChange={(event) => updateForm("address", event.target.value)} placeholder="الحي، الشارع، المدينة" /></label>
               <div className="branch-note full-field"><span className="branch-note-icon">01</span><span><strong>فرعك الأول جاهز</strong><small>يمكنك إضافة فروع أخرى من لوحة التحكم.</small></span></div>
             </div>}
@@ -158,7 +183,7 @@ export default function OnboardingPage() {
                 <strong className="plan-name">{item.name}</strong><span className="plan-price">{item.price}<small>{item.id !== "starter" && " / شهرياً"}</small></span>
                 <span className="plan-divider" /><span className="plan-features">{item.features.map((feature) => <span key={feature}><Check size={14} />{feature}</span>)}</span>
               </button>)}
-              <div className="trial-banner full-field"><Sparkles size={18} /><span><strong>١٤ يوماً مجاناً</strong><small>لن يتم خصم أي مبلغ خلال فترة التجربة.</small></span><CheckCircle2 size={18} /></div>
+              <div className="trial-banner full-field"><Sparkles size={18} /><span><strong>٣٠ يوماً مجاناً</strong><small>لن يتم خصم أي مبلغ خلال فترة التجربة.</small></span><CheckCircle2 size={18} /></div>
             </div>}
 
             {error && <p className="form-error" role="alert">{error}</p>}

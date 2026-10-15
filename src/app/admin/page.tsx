@@ -1,5 +1,6 @@
 import { extendTenantTrial, toggleTenantStatus } from "./actions";
 import { requireSuperAdmin } from "./auth";
+import Image from "next/image";
 import "./admin.css";
 
 type TenantRow = {
@@ -66,6 +67,7 @@ export default async function AdminPage() {
     <main className="admin-page">
       <header className="admin-header">
         <div>
+          <a href="/admin" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={132} height={38} /></a>
           <p className="admin-eyebrow">PLATFORM CONTROL</p>
           <h1>Super Admin</h1>
           <p className="admin-description">Salon accounts, subscriptions, and platform performance.</p>

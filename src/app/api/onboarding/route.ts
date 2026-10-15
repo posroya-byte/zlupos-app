@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
 import type { SubscriptionPlan } from "@/types/database";
+import { countries, type CountryCode } from "../../onboarding/countries";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,9 @@ type OnboardingPayload = {
   salonName?: unknown;
   salonPhone?: unknown;
   address?: unknown;
+  country?: unknown;
+  currency?: unknown;
+  timezone?: unknown;
   primaryColor?: unknown;
   plan?: unknown;
   logoDataUrl?: unknown;
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
   const salonName = cleanText(payload.salonName, 120);
   const salonPhone = cleanText(payload.salonPhone, 32);
   const address = cleanText(payload.address, 240);
+  const countryCode = payload.country;
   const primaryColor = cleanText(payload.primaryColor, 7);
   const plan = payload.plan;
   const logoDataUrl = payload.logoDataUrl;
@@ -63,6 +68,13 @@ export async function POST(request: Request) {
   }
   if (typeof plan !== "string" || !PLANS.includes(plan as SubscriptionPlan)) {
     return fail("يرجى اختيار باقة صالحة.");
+  }
+  if (typeof countryCode !== "string" || !Object.prototype.hasOwnProperty.call(countries, countryCode)) {
+    return fail("يرجى اختيار دولة صالحة.");
+  }
+  const country = countries[countryCode as CountryCode];
+  if (payload.currency !== country.currencyCode || payload.timezone !== country.timezone) {
+    return fail("إعدادات العملة والمنطقة الزمنية لا تطابق الدولة المختارة.");
   }
 
   let logo: { contentType: string; bytes: Buffer; extension: string } | null = null;
@@ -151,6 +163,8 @@ export async function POST(request: Request) {
         slug,
         logo_url: logoUrl,
         primary_color: primaryColor,
+        currency: country.currencyCode,
+        timezone: country.timezone,
         owner_id: userId,
         status: "trialling",
         trial_ends_at: trialEndsAt,
@@ -177,6 +191,8 @@ export async function POST(request: Request) {
         name: "الفرع الرئيسي",
         address,
         phone: salonPhone,
+        currency: country.currencyCode,
+        timezone: country.timezone,
         is_main: true,
       })
       .select("id")

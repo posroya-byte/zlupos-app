@@ -3,6 +3,7 @@
 import { BarChart3, CalendarDays, ChevronDown, CircleHelp, LayoutDashboard, LogOut, Scissors, Settings2, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import type { TenantBranding } from "@/types/database";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { TenantBrandingContext } from "./TenantBrandingContext";
@@ -23,7 +24,7 @@ export default function DashboardShell({ tenant, children }: { tenant: TenantBra
     <div className="dashboard-shell" dir="rtl" style={{ "--tenant-color": tenant.primaryColor } as React.CSSProperties}>
       <aside className="dashboard-sidebar">
         <Link className="dashboard-brand" href="/dashboard/pos">
-          <span className="dashboard-logo" style={{ backgroundImage: tenant.logoUrl ? `url(${tenant.logoUrl})` : undefined, backgroundColor: tenant.primaryColor }}>{!tenant.logoUrl && <span>{tenant.name.slice(0, 1)}</span>}</span>
+          <span className="dashboard-logo"><Image src="/logo.svg" alt="ZLUPOS" width={32} height={32} /></span>
           <span><strong>{tenant.name}</strong><small>ZLUPOS PRODUCTION</small></span>
         </Link>
         <div className="sidebar-caption">مساحة العمل</div>
@@ -41,7 +42,7 @@ export default function DashboardShell({ tenant, children }: { tenant: TenantBra
       </aside>
       <div className="dashboard-main">
         <header className="dashboard-header">
-          <div className="header-context"><span className="header-kicker">إدارة الصالون</span><strong>{tenant.name}</strong></div>
+          <div className="header-context"><a href="/dashboard" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={104} height={30} /></a><span className="header-kicker">إدارة الصالون</span><strong>{tenant.name}</strong></div>
           <div className="header-actions"><span className="branch-chip"><span /> الفرع الرئيسي</span><span className="header-date">الأربعاء، ١٤ أكتوبر ٢٠٢٦</span><span className="user-avatar">{tenant.name.slice(0, 1)}</span></div>
         </header>
         <main className="dashboard-content">{children}</main>
