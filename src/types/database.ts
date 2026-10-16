@@ -7,6 +7,9 @@ export interface Tenant {
   slug: string;
   logo_url: string | null;
   primary_color: string;
+  country_code: string | null;
+  currency: string;
+  timezone: string;
   owner_id: string;
   status: TenantStatus;
   trial_ends_at: string;
@@ -29,6 +32,9 @@ export interface Branch {
   name: string;
   address: string | null;
   phone: string | null;
+  country_code: string | null;
+  currency: string;
+  timezone: string;
   is_main: boolean;
   created_at: string;
 }
@@ -72,4 +78,6 @@ export interface TenantBranding {
   name: string;
   logoUrl: string | null;
   primaryColor: string;
+  currency: string;
+  timezone: string;
 }

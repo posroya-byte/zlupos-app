@@ -28,13 +28,13 @@ export async function requireSuperAdmin() {
   if (error || !user) redirect("/dashboard");
 
   const admin = getSupabaseAdminClient();
-  const { data: profile, error: profileError } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
+  const { data: platformAdmin, error: platformAdminError } = await admin
+    .from("platform_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
     .single();
 
-  if (profileError || profile?.role !== "super_admin") redirect("/dashboard");
+  if (platformAdminError || !platformAdmin) redirect("/dashboard");
 
   return admin;
 }

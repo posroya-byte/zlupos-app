@@ -17,7 +17,32 @@ export async function toggleTenantStatus(formData: FormData) {
 
   if (tenantError || !tenant) redirect("/admin");
 
-  const status = tenant.status === "suspended" ? "active" : "suspended";
+  let status = "suspended";
+  if (tenant.status === "suspended") {
+    const { data: subscription, error: subscriptionError } = await admin
+      .from("subscriptions")
+      .select("status,trial_ends_at,current_period_ends_at")
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (subscriptionError || !subscription) redirect("/admin");
+
+    const now = Date.now();
+    const trialEnd = Date.parse(subscription.trial_ends_at);
+    const periodEnd = subscription.current_period_ends_at
+      ? Date.parse(subscription.current_period_ends_at)
+      : Number.NaN;
+    if (subscription.status === "trialing" && Number.isFinite(trialEnd) && trialEnd > now) {
+      status = "trialing";
+    } else if (subscription.status === "active" && Number.isFinite(periodEnd) && periodEnd > now) {
+      status = "active";
+    } else {
+      redirect("/admin");
+    }
+  }
+
   const { error } = await admin.from("tenants").update({ status }).eq("id", tenantId);
   if (error) throw new Error("Could not update salon status.");
 
@@ -32,21 +57,38 @@ export async function extendTenantTrial(formData: FormData) {
   const admin = await requireSuperAdmin();
   const { data: tenant, error: tenantError } = await admin
     .from("tenants")
-    .select("trial_ends_at")
+    .select("status,trial_ends_at")
     .eq("id", tenantId)
     .single();
 
-  if (tenantError || !tenant) redirect("/admin");
+  if (tenantError || !tenant || tenant.status !== "trialing") redirect("/admin");
 
-  const trialEnd = new Date(tenant.trial_ends_at);
+  const { data: subscription, error: subscriptionError } = await admin
+    .from("subscriptions")
+    .select("id,status,trial_ends_at")
+    .eq("tenant_id", tenantId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (subscriptionError || !subscription || subscription.status !== "trialing") redirect("/admin");
+
+  const trialEnd = new Date(subscription.trial_ends_at);
   const baseDate = Number.isNaN(trialEnd.getTime()) || trialEnd < new Date() ? new Date() : trialEnd;
   baseDate.setDate(baseDate.getDate() + 14);
+  const extendedTrialEnd = baseDate.toISOString();
 
-  const { error } = await admin
+  const { error: tenantUpdateError } = await admin
     .from("tenants")
-    .update({ trial_ends_at: baseDate.toISOString() })
+    .update({ trial_ends_at: extendedTrialEnd })
     .eq("id", tenantId);
-  if (error) throw new Error("Could not extend the trial.");
+  if (tenantUpdateError) throw new Error("Could not update the salon trial date.");
+
+  const { error: subscriptionUpdateError } = await admin
+    .from("subscriptions")
+    .update({ trial_ends_at: extendedTrialEnd })
+    .eq("id", subscription.id)
+    .eq("tenant_id", tenantId);
+  if (subscriptionUpdateError) throw new Error("Could not extend the trial.");
 
   revalidatePath("/admin");
   redirect("/admin");

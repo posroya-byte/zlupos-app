@@ -163,10 +163,11 @@ export async function POST(request: Request) {
         slug,
         logo_url: logoUrl,
         primary_color: primaryColor,
+        country_code: countryCode,
         currency: country.currencyCode,
         timezone: country.timezone,
         owner_id: userId,
-        status: "trialling",
+        status: "trialing",
         trial_ends_at: trialEndsAt,
       })
       .select("id")
@@ -191,6 +192,7 @@ export async function POST(request: Request) {
         name: "الفرع الرئيسي",
         address,
         phone: salonPhone,
+        country_code: countryCode,
         currency: country.currencyCode,
         timezone: country.timezone,
         is_main: true,
@@ -205,7 +207,7 @@ export async function POST(request: Request) {
       .insert({
         tenant_id: tenantId,
         plan,
-        status: "trialling",
+        status: "trialing",
         starts_at: now.toISOString(),
         trial_ends_at: trialEndsAt,
       })
@@ -217,7 +219,14 @@ export async function POST(request: Request) {
     const response = NextResponse.json({ success: true });
     response.cookies.set(
       "zlupos_tenant",
-      Buffer.from(JSON.stringify({ id: tenantId, name: salonName, logoUrl, primaryColor })).toString("base64url"),
+      Buffer.from(JSON.stringify({
+        id: tenantId,
+        name: salonName,
+        logoUrl,
+        primaryColor,
+        currency: country.currencyCode,
+        timezone: country.timezone,
+      })).toString("base64url"),
       {
         httpOnly: true,
         sameSite: "lax",

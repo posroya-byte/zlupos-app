@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const features: { title: string; description: string; icon: LucideIcon; tint: string }[] = [
   { title: "نقطة بيع سريعة", description: "أضيفي الخدمات والمنتجات، أتمّي الدفع، واطبعي الإيصال من شاشة واحدة.", icon: CreditCard, tint: "mint" },
@@ -123,7 +124,7 @@ export default function Home() {
     <div className="zl-page" dir="rtl" lang="ar">
       <style>{styles}</style>
       <header className="zl-header zl-container">
-        <a className="zl-logo" href="/" aria-label="ZLUPOS الصفحة الرئيسية"><Image src="/logo.svg" alt="ZLUPOS" width={154} height={43} priority /></a>
+        <Link className="zl-logo" href="/" aria-label="ZLUPOS الصفحة الرئيسية"><Image src="/logo.svg" alt="ZLUPOS" width={154} height={43} priority /></Link>
         <nav className="zl-nav" aria-label="التنقل الرئيسي"><a href="#features">المميزات</a><a href="#pricing">الباقات</a><a href="#faq">الأسئلة الشائعة</a></nav>
         <div className="zl-actions"><a className="zl-login" href="/login">تسجيل الدخول</a><a className="zl-button" href="/onboarding">ابدأ تجربة 30 يوماً مجاناً</a></div>
       </header>
@@ -176,7 +177,7 @@ export default function Home() {
         <section className="zl-bottom-cta"><div className="zl-container zl-cta-inner"><div><h2>صالونك يستحق بداية أسهل</h2><p>ابدئي اليوم، واكتشفي تجربة إدارة متكاملة لمدة ٣٠ يوماً.</p></div><a className="zl-button" href="/onboarding">ابدئي التجربة المجانية <span aria-hidden="true">←</span></a></div></section>
       </main>
 
-      <footer className="zl-footer"><div className="zl-container"><div className="zl-footer-main"><div className="zl-footer-brand"><a href="/" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={145} height={41} /></a><p>منصة إدارة الصالونات ونقاط البيع، لتكون تفاصيل عملك أوضح ويومك أسهل.</p></div><nav className="zl-footer-links" aria-label="روابط إضافية"><a href="#features">المميزات</a><a href="#pricing">الباقات</a><a href="#faq">الأسئلة الشائعة</a><a href="/privacy">سياسة الخصوصية</a><a href="/terms">شروط الاستخدام</a><a href="mailto:support@zlupos.com">تواصلي معنا</a></nav></div><div className="zl-footer-meta"><span>© ٢٠٢٦ ZLUPOS. جميع الحقوق محفوظة.</span><span>مصمم لأصحاب الصالونات في المنطقة العربية</span></div></div></footer>
+      <footer className="zl-footer"><div className="zl-container"><div className="zl-footer-main"><div className="zl-footer-brand"><Link href="/" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={145} height={41} /></Link><p>منصة إدارة الصالونات ونقاط البيع، لتكون تفاصيل عملك أوضح ويومك أسهل.</p></div><nav className="zl-footer-links" aria-label="روابط إضافية"><a href="#features">المميزات</a><a href="#pricing">الباقات</a><a href="#faq">الأسئلة الشائعة</a><a href="/privacy">سياسة الخصوصية</a><a href="/terms">شروط الاستخدام</a><a href="mailto:support@zlupos.com">تواصلي معنا</a></nav></div><div className="zl-footer-meta"><span>© ٢٠٢٦ ZLUPOS. جميع الحقوق محفوظة.</span><span>مصمم لأصحاب الصالونات في المنطقة العربية</span></div></div></footer>
     </div>
   );
 }

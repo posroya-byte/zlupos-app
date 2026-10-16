@@ -8,6 +8,8 @@ export const TenantBrandingContext = createContext<TenantBranding>({
   name: "صالونك",
   logoUrl: null,
   primaryColor: "#1d6c52",
+  currency: "EGP",
+  timezone: "Africa/Cairo",
 });
 
 export function useTenantBranding() {

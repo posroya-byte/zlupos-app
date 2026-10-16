@@ -2,7 +2,7 @@
 
 import { BarChart3, CalendarDays, ChevronDown, CircleHelp, LayoutDashboard, LogOut, Scissors, Settings2, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import type { TenantBranding } from "@/types/database";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -18,6 +18,7 @@ const navigation = [
 
 export default function DashboardShell({ tenant, children }: { tenant: TenantBranding; children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <TenantBrandingContext.Provider value={tenant}>
@@ -37,7 +38,7 @@ export default function DashboardShell({ tenant, children }: { tenant: TenantBra
           <Link href="/dashboard/settings" className="dashboard-nav-link"><Settings2 size={18} strokeWidth={1.8} /><span>الإعدادات</span></Link>
           <Link href="mailto:support@zlupos.com" className="dashboard-nav-link"><CircleHelp size={18} strokeWidth={1.8} /><span>المساعدة</span></Link>
           <div className="trial-mini"><span className="trial-mini-dot" /><span><strong>فترة التجربة</strong><small>متبقي ١٤ يوماً</small></span><ChevronDown size={15} /></div>
-          <button className="sidebar-logout" type="button" onClick={async () => { await getSupabaseBrowserClient().auth.signOut(); window.location.href = "/login"; }}><LogOut size={16} /> الخروج</button>
+          <button className="sidebar-logout" type="button" onClick={async () => { await getSupabaseBrowserClient().auth.signOut(); router.replace("/login"); }}><LogOut size={16} /> الخروج</button>
         </div>
       </aside>
       <div className="dashboard-main">

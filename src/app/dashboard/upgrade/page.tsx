@@ -8,7 +8,8 @@ const plans = [
 ];
 
 async function readTrialEndDate() {
-  const tenantCookie = cookies().get("zlupos_tenant")?.value;
+  const cookieStore = await cookies();
+  const tenantCookie = cookieStore.get("zlupos_tenant")?.value;
   if (!tenantCookie) return null;
 
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ImagePlus, LoaderCircle, Sparkles, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useEffect, useState, type ChangeEvent } from "react";
@@ -32,11 +33,14 @@ export default function OnboardingPage() {
   const country = countries[countryCode];
 
   useEffect(() => {
-    setCountryCode(detectCountryCode(Intl.DateTimeFormat().resolvedOptions().timeZone));
-    const requestedPlan = new URLSearchParams(window.location.search).get("plan");
-    if (requestedPlan && plans.some((item) => item.id === requestedPlan)) {
-      setPlan(requestedPlan as SubscriptionPlan);
-    }
+    const initializationTimer = window.setTimeout(() => {
+      setCountryCode(detectCountryCode(Intl.DateTimeFormat().resolvedOptions().timeZone));
+      const requestedPlan = new URLSearchParams(window.location.search).get("plan");
+      if (requestedPlan && plans.some((item) => item.id === requestedPlan)) {
+        setPlan(requestedPlan as SubscriptionPlan);
+      }
+    }, 0);
+    return () => window.clearTimeout(initializationTimer);
   }, []);
 
   function updateForm(field: keyof FormValues, value: string) {
@@ -98,9 +102,9 @@ export default function OnboardingPage() {
   return (
     <main className="onboarding-shell" dir="rtl">
       <aside className="onboarding-rail">
-        <a className="brand-lockup" href="/onboarding" aria-label="ZLUPOS Production">
+        <Link className="brand-lockup" href="/onboarding" aria-label="ZLUPOS Production">
           <Image src="/logo.svg" alt="ZLUPOS" width={142} height={39} style={{ width: 142, height: 39, objectFit: "contain" }} />
-        </a>
+        </Link>
         <div className="rail-copy">
           <span className="eyebrow">كل تفاصيل صالونك، في مكان واحد</span>
           <h1>بداية مرتبة<br />ليوم أجمل.</h1>
@@ -111,7 +115,7 @@ export default function OnboardingPage() {
       </aside>
 
       <section className="onboarding-main">
-        <header className="onboarding-topbar"><a href="/" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={112} height={31} style={{ width: 112, height: 31, objectFit: "contain" }} /></a><span>إنشاء مساحة عمل جديدة</span><span className="secure-note"><CheckCircle2 size={15} /> بياناتك محمية</span></header>
+        <header className="onboarding-topbar"><Link href="/" aria-label="ZLUPOS"><Image src="/logo.svg" alt="ZLUPOS" width={112} height={31} style={{ width: 112, height: 31, objectFit: "contain" }} /></Link><span>إنشاء مساحة عمل جديدة</span><span className="secure-note"><CheckCircle2 size={15} /> بياناتك محمية</span></header>
         <div className="wizard-wrap">
           <div className="wizard-heading">
             <div>

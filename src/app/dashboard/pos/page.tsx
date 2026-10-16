@@ -2,7 +2,7 @@
 
 import { Check, Minus, Plus, Printer, Search, ShoppingBag, Trash2, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { useTenantBranding } from "../TenantBrandingContext";
 
@@ -15,8 +15,13 @@ type SaleResult = {
   created_at: string;
   items: { service_id: string; name: string; quantity: number; unit_price: number }[];
 };
-const money = new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 });
-const formatPrice = (value: number) => `${money.format(value)} ج.م`;
+function formatPrice(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("ar-EG", { style: "currency", currency }).format(value);
+  } catch {
+    return new Intl.NumberFormat("ar-EG", { style: "currency", currency: "EGP" }).format(value);
+  }
+}
 
 function serviceTone(category: string, index: number) {
   if (category.includes("شعر")) return ["sage", "rose", "amber", "blue"][index % 4];
@@ -40,6 +45,7 @@ export default function PosPage() {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [checkoutError, setCheckoutError] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const idempotencyKey = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -121,11 +127,14 @@ export default function PosPage() {
     if (!branchId || checkoutLoading) return;
     setCheckoutLoading(true);
     setCheckoutError("");
+    const requestKey = idempotencyKey.current ?? crypto.randomUUID();
+    idempotencyKey.current = requestKey;
     try {
       const { data, error } = await getSupabaseBrowserClient().rpc("create_sale", {
         p_branch_id: branchId,
         p_payment_method: paymentMethod,
         p_items: cart.map(({ service, quantity }) => ({ service_id: service.id, quantity })),
+        p_request_key: requestKey,
       });
       if (error) throw error;
       const sale = data as SaleResult | null;
@@ -146,6 +155,7 @@ export default function PosPage() {
       });
       setCart([]);
       setPaymentOpen(false);
+      idempotencyKey.current = null;
     } catch (error) {
       console.error("POS checkout failed", error);
       setCheckoutError("تعذر حفظ عملية البيع. لم يتم إصدار الإيصال، يرجى المحاولة مرة أخرى.");
@@ -176,7 +186,7 @@ export default function PosPage() {
               <span className={`service-mark ${service.tone}`}>{service.mark}</span>
               <span className="service-name">{service.name}</span>
               <span className="service-category">{service.category}</span>
-              <span className="service-price">{formatPrice(service.price)}</span>
+              <span className="service-price">{formatPrice(service.price, tenant.currency)}</span>
               <span className="service-add"><Plus size={15} /></span>
             </button>)}
             {!loadingServices && !loadError && visibleServices.length === 0 && <p className="empty-services">لا توجد خدمات بهذا الاسم.</p>}
@@ -190,17 +200,17 @@ export default function PosPage() {
           <div className="cart-lines">
             {cart.length === 0 ? <div className="cart-empty"><span className="empty-bag"><ShoppingBag size={21} /></span><strong>الفاتورة فارغة</strong><small>اختاري خدمة من القائمة لإضافتها هنا.</small></div> : cart.map(({ service, quantity }) => <div className="cart-line" key={service.id}>
               <div className={`cart-line-mark ${service.tone}`}>{service.mark}</div>
-              <div className="cart-line-copy"><strong>{service.name}</strong><small>{formatPrice(service.price)}</small></div>
+              <div className="cart-line-copy"><strong>{service.name}</strong><small>{formatPrice(service.price, tenant.currency)}</small></div>
               <div className="quantity-control"><button type="button" aria-label={`تقليل ${service.name}`} onClick={() => adjustQuantity(service.id, -1)}><Minus size={12} /></button><span>{quantity}</span><button type="button" aria-label={`زيادة ${service.name}`} onClick={() => adjustQuantity(service.id, 1)}><Plus size={12} /></button></div>
-              <strong className="line-total">{formatPrice(service.price * quantity)}</strong>
+              <strong className="line-total">{formatPrice(service.price * quantity, tenant.currency)}</strong>
             </div>)}
           </div>
           {cart.length > 0 && <button className="clear-cart" type="button" onClick={() => setCart([])}><Trash2 size={14} /> تفريغ الفاتورة</button>}
           <div className="cart-summary">
-            <div><span>الإجمالي الفرعي</span><strong>{formatPrice(subtotal)}</strong></div>
+            <div><span>الإجمالي الفرعي</span><strong>{formatPrice(subtotal, tenant.currency)}</strong></div>
             <div className="discount-row"><span>الخصم</span><button type="button" disabled>إضافة خصم</button></div>
-            <div className="summary-total"><span>الإجمالي</span><strong>{formatPrice(subtotal)}</strong></div>
-            <button className="checkout-button" type="button" disabled={!cart.length} onClick={openPayment}>الدفع <span>{formatPrice(subtotal)}</span><span className="checkout-arrow"><ArrowLeftIcon /></span></button>
+            <div className="summary-total"><span>الإجمالي</span><strong>{formatPrice(subtotal, tenant.currency)}</strong></div>
+            <button className="checkout-button" type="button" disabled={!cart.length} onClick={openPayment}>الدفع <span>{formatPrice(subtotal, tenant.currency)}</span><span className="checkout-arrow"><ArrowLeftIcon /></span></button>
             <p className="checkout-note">الأسعار تشمل جميع الرسوم</p>
           </div>
         </aside>
@@ -209,14 +219,14 @@ export default function PosPage() {
       {paymentOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentOpen(false); }}>
         <section className="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-title" dir="rtl">
           <header className="modal-heading"><div><span className="modal-kicker">فاتورة جديدة</span><h2 id="payment-title">إتمام الدفع</h2></div><button type="button" aria-label="إغلاق" onClick={() => setPaymentOpen(false)}><X size={19} /></button></header>
-          <div className="payment-total"><span>المبلغ المستحق</span><strong>{formatPrice(subtotal)}</strong></div>
+          <div className="payment-total"><span>المبلغ المستحق</span><strong>{formatPrice(subtotal, tenant.currency)}</strong></div>
           <div className="payment-methods" role="group" aria-label="طريقة الدفع">
             <button type="button" className={paymentMethod === "cash" ? "selected" : ""} onClick={() => setPaymentMethod("cash")}><span className="method-symbol cash-symbol">ج</span><span><strong>نقداً</strong><small>دفع نقدي</small></span>{paymentMethod === "cash" && <Check size={17} />}</button>
             <button type="button" className={paymentMethod === "card" ? "selected" : ""} onClick={() => setPaymentMethod("card")}><span className="method-symbol card-symbol">▤</span><span><strong>بطاقة</strong><small>بطاقة بنكية</small></span>{paymentMethod === "card" && <Check size={17} />}</button>
           </div>
-          {paymentMethod === "cash" && <label className="field paid-field"><span>المبلغ المستلم</span><div><input type="number" min={subtotal} value={paidAmount} onChange={(event) => setPaidAmount(event.target.value)} /><span>ج.م</span></div><small>الباقي للعميلة: {formatPrice(Math.max(0, Number(paidAmount) - subtotal))}</small></label>}
+          {paymentMethod === "cash" && <label className="field paid-field"><span>المبلغ المستلم</span><div><input type="number" min={subtotal} value={paidAmount} onChange={(event) => setPaidAmount(event.target.value)} /><span>{tenant.currency}</span></div><small>الباقي للعميلة: {formatPrice(Math.max(0, Number(paidAmount) - subtotal), tenant.currency)}</small></label>}
           {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
-          <button className="modal-confirm" type="button" disabled={checkoutLoading || (paymentMethod === "cash" && Number(paidAmount) < subtotal)} onClick={completeSale}>{checkoutLoading ? "جارٍ حفظ العملية..." : <>تأكيد الدفع <span>{formatPrice(subtotal)}</span></>}</button>
+          <button className="modal-confirm" type="button" disabled={checkoutLoading || (paymentMethod === "cash" && Number(paidAmount) < subtotal)} onClick={completeSale}>{checkoutLoading ? "جارٍ حفظ العملية..." : <>تأكيد الدفع <span>{formatPrice(subtotal, tenant.currency)}</span></>}</button>
           <p className="modal-secure">سيتم إصدار إيصال بعد تأكيد العملية.</p>
         </section>
       </div>}
@@ -229,9 +239,9 @@ export default function PosPage() {
             <p className="receipt-kicker">{tenant.name}</p><h2 id="receipt-title">إيصال دفع</h2>
             <div className="receipt-meta"><span>{receipt.number}</span><span>{receipt.date}</span></div>
             <div className="receipt-rule" />
-            {receipt.lines.map(({ service, quantity }) => <div className="receipt-line" key={service.id}><span>{service.name} × {quantity}</span><strong>{formatPrice(service.price * quantity)}</strong></div>)}
+            {receipt.lines.map(({ service, quantity }) => <div className="receipt-line" key={service.id}><span>{service.name} × {quantity}</span><strong>{formatPrice(service.price * quantity, tenant.currency)}</strong></div>)}
             <div className="receipt-rule" />
-            <div className="receipt-line receipt-total"><span>الإجمالي</span><strong>{formatPrice(receipt.total)}</strong></div>
+            <div className="receipt-line receipt-total"><span>الإجمالي</span><strong>{formatPrice(receipt.total, tenant.currency)}</strong></div>
             <div className="receipt-method">طريقة الدفع: {receipt.method === "cash" ? "نقداً" : "بطاقة"}</div>
             <p className="receipt-thanks">شكراً لزيارتكِ، نتمنى لكِ يوماً جميلاً</p>
           </div>
